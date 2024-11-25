@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: url('https://via.placeholder.com/1920x1080') no-repeat center center fixed; /* Replace with your image URL */
+      background-size: cover;
+      color: #fff;
+    }
+
+    .quiz-container {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      width: 300px;
+    }
+
+    h1 {
+      color: #fff;
+    }
+
+    #question {
+      font-size: 18px;
+      margin: 20px 0;
+    }
+
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .answer-btn {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .answer-btn:hover {
+      background: #0056b3;
+    }
+
+    #next-btn, #restart-btn {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #next-btn:hover, #restart-btn:hover {
+      background: #218838;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #result {
+      font-size: 20px;
+      color: #fff;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    select, input {
+      margin: 5px 0 15px;
+      padding: 8px;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    #start-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    #start-btn:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>Quiz Game</h1>
+    <div id="login">
+      <label for="username">Enter your name:</label>
+      <input type="text" id="username" placeholder="Your name" required>
+      <button id="login-btn">Login</button>
+    </div>
+    <div id="settings" class="hidden">
+      <p>Welcome, <span id="user-name"></span>!</p>
+      <label for="difficulty">Select Difficulty:</label>
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+      <label for="num-questions">Number of Questions:</label>
+      <input type="number" id="num-questions" min="1" max="10" value="3">
+      <button id="start-btn">Start Quiz</button>
+    </div>
+    <div id="quiz" class="hidden">
+      <div id="question">Question text goes here</div>
+      <div class="answers">
+        <button class="answer-btn" data-answer="A">Answer A</button>
+        <button class="answer-btn" data-answer="B">Answer B</button>
+        <button class="answer-btn" data-answer="C">Answer C</button>
+        <button class="answer-btn" data-answer="D">Answer D</button>
+      </div>
+    </div>
+    <button id="next-btn" class="hidden">Next</button>
+    <div id="result" class="hidden">
+      <p>Your score: <span id="score"></span></p>
+      <button id="restart-btn">Restart</button>
+    </div>
+  </div>
+
+  <script>
+    const quizData = {
+      easy: [
+        { question: "What is 1 + 1?", options: ["1", "2", "3", "4"], correct: "2" },
+        { question: "Which color is the sky?", options: ["Green", "Blue", "Red", "Yellow"], correct: "Blue" }
+      ],
+      medium: [
+        { question: "What is the capital of Spain?", options: ["Madrid", "Barcelona", "Lisbon", "Paris"], correct: "Madrid" },
+        { question: "What is 12 / 4?", options: ["4", "3", "5", "6"], correct: "3" }
+      ],
+      hard: [
+        { question: "What is the square root of 121?", options: ["9", "11", "13", "15"], correct: "11" },
+        { question: "Who discovered penicillin?", options: ["Newton", "Fleming", "Einstein", "Darwin"], correct: "Fleming" }
+      ]
+    };
+
+    let userName = '';
+    let selectedDifficulty = "easy";
+    let selectedNumQuestions = 3;
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let questions = [];
+
+    const loginEl = document.getElementById("login");
+    const usernameEl = document.getElementById("username");
+    const loginBtn = document.getElementById("login-btn");
+    const settingsEl = document.getElementById("settings");
+    const userNameEl = document.getElementById("user-name");
+    const difficultyEl = document.getElementById("difficulty");
+    const numQuestionsEl = document.getElementById("num-questions");
+    const startBtn = document.getElementById("start-btn");
+    const quizEl = document.getElementById("quiz");
+    const questionEl = document.getElementById("question");
+    const answersEl = document.querySelectorAll(".answer-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const resultEl = document.getElementById("result");
+    const scoreEl = document.getElementById("score");
+    const restartBtn = document.getElementById("restart-btn");
+
+    loginBtn.addEventListener("click", () => {
+      userName = usernameEl.value.trim();
+      if (userName) {
+        loginEl.classList.add("hidden");
+        settingsEl.classList.remove("hidden");
+        userNameEl.textContent = userName;
+      } else {
+        alert("Please enter your name!");
+      }
+    });
+
+    startBtn.addEventListener("click", () => {
+      selectedDifficulty = difficultyEl.value;
+      selectedNumQuestions = parseInt(numQuestionsEl.value);
+      questions = quizData[selectedDifficulty].slice(0, selectedNumQuestions);
+      score = 0;
+      currentQuestionIndex = 0;
+      settingsEl.classList.add("hidden");
+      quizEl.classList.remove("hidden");
+      nextBtn.classList.remove("hidden");
+      loadQuestion();
+    });
+
+    function loadQuestion() {
+      const currentQuestion = questions[currentQuestionIndex];
+      questionEl.textContent = currentQuestion.question;
+      answersEl.forEach((btn, index) => {
+        btn.textContent = currentQuestion.options[index];
+        btn.onclick = () => {
+          if (btn.textContent === currentQuestion.correct) score++;
+          currentQuestionIndex++;
+          if (currentQuestionIndex < questions.length) loadQuestion();
+          else endQuiz();
+        };
+      });
+    }
+
+    function endQuiz() {
+      quizEl.classList.add("hidden");
+      nextBtn.classList.add("hidden");
+      resultEl.classList.remove("hidden");
+      scoreEl.textContent = `${score} / ${questions.length}`;
+    }
+
+    restartBtn.addEventListener("click", () => {
+      resultEl.classList.add("hidden");
+      loginEl.classList.remove("hidden");
+    });
+  </script>
+</body>
+</html>
